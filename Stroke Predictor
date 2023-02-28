@@ -1,0 +1,83 @@
+import pandas as pd
+import tensorflow as tf
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+# Preprocessing step
+df = pd.read_csv('/content/healthcare-dataset-stroke-data.csv')
+
+df.drop('id', axis=1, inplace=True)
+
+df = df.dropna()
+df = pd.get_dummies(df, columns=['gender', 'ever_married', 'work_type', 'Residence_type', 'smoking_status'])
+
+# Split the data 
+X = df.drop('stroke', axis=1)
+y = df['stroke']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+
+# Scale the features
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Neural Network Architecture
+model = tf.keras.models.Sequential()
+model.add(tf.keras.layers.Dense(64, activation='relu', input_shape=(X_train.shape[1],)))
+model.add(tf.keras.layers.Dense(64, activation='relu'))
+model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
+
+# Compile & Train
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+history = model.fit(X_train, y_train, epochs=100, batch_size=32, validation_data=(X_test, y_test))
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.neural_network import MLPClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+# Prediction Given Specific Values
+new_data = pd.DataFrame({
+    'age': [100],
+    'hypertension': [1],
+    'heart_disease': [1],
+    'ever_married_Yes': [0],
+    'ever_married_No': [1],
+    'work_type_Govt_job': [0],
+    'work_type_children': [0],
+    'work_type_Private': [0],
+    'work_type_Self-employed': [0],
+    'Residence_type_Urban': [1],
+    'Residence_type_Rural': [0],
+    'avg_glucose_level': [95],
+    'bmi': [50],
+    'gender_Female': [0],
+    'gender_Male': [1],
+    'gender_Other': [0],
+    'smoking_status_never smoked': [1],
+    'smoking_status_formerly smoked': [0],
+    'smoking_status_smokes': [0],
+    'smoking_status_Unknown': [0],
+    'work_type_Never_worked': [1]
+})
+
+X_train_df = pd.DataFrame(X_train, columns=df.drop('stroke', axis=1).columns)
+
+
+columns = X_train_df.columns
+
+
+new_data = new_data.reindex(columns, axis=1)
+
+
+# Make and Interpret Predictions
+new_data = scaler.transform(new_data)
+predictions = model.predict(new_data)
+
+likelihood_of_stroke = predictions[:, 0]
+print(predictions)
+answer = 0
+for elem in likelihood_of_stroke:
+  answer += elem
+print(answer * 100,'%')
