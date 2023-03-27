@@ -18,9 +18,9 @@ def get_wiki_links(url):
     response = requests.get(url)
     soup = BeautifulSoup(response.text, 'html.parser')
     links = soup.find_all('a')
-    wiki_links = [link.get('href') for link in links
-                  if link.get('href') and link.get('href').startswith('/wiki/')
-                  and 'http' not in link.get('href')
+    wiki_links = [link.get('href') for link in links 
+                  if link.get('href') and link.get('href').startswith('/wiki/') 
+                  and 'http' not in link.get('href') 
                   and ':' not in link.get('href')]
     full_links = [urljoin(url, link) for link in wiki_links]
     return full_links
@@ -35,7 +35,7 @@ class Graph:
         self.graph[start][end] = weight
 
     def __contains__(self, node):
-        return node in self.graph
+        return node in self.graph    
 
     def return_edges(self, node):
         return self.graph.get(node, {})
@@ -57,10 +57,12 @@ def find_path(start, end, n, weight=1, Wikiholder=None):
         Wikiholder = Graph()
 
     visited = set()
-    queue = deque([(start, 0)])
+    queue = deque([(start, 0, None)])  # Add a third element for the parent node
+
+    parent_map = {}  # Dictionary to store parent nodes
 
     while queue:
-        current_url, depth = queue.popleft()
+        current_url, depth, parent = queue.popleft()
 
         if depth > n:
             break
@@ -69,55 +71,38 @@ def find_path(start, end, n, weight=1, Wikiholder=None):
             visited.add(current_url)
             possible_links = get_wiki_links(current_url)
 
-            for link in possible_links:
-                Wikiholder.add_edge(current_url, link, weight)
+            # Store the parent node for the current_url
+            if parent is not None:
+                parent_map[current_url] = parent
+                Wikiholder.add_edge(parent, current_url, weight)
 
+            for link in possible_links:
                 if link == end:
-                    visited.add(link)
-                    return Wikiholder
+                    # When the end node is found, reconstruct the path using the parent_map
+                    path = [link]
+                    current_node = current_url
+                    while current_node != start:
+                        path.append(current_node)
+                        current_node = parent_map[current_node]
+                    path.append(start)
+                    path.reverse()
+                    return Wikiholder, path
 
                 if link not in visited:
-                    queue.append((link, depth + 1))
+                    queue.append((link, depth + 1, current_url))
 
     Wikiholder.add_edge(end, end, 1)
-    return Wikiholder
-# use the return_edges method in order to get the neighbors of the node and find the shortest path from start to end node.
-# Depth First Search Recursive Backtracking Solution to Find Path
-
-def path(start, end, Wikiholder, current_path=None, visited=None):
-    if visited is None:
-        visited = set()
-
-    if current_path is None:
-        current_path = []
-
-    if start not in visited:
-        current_path.append(start)
-        visited.add(start)
-
-        if start == end:
-            return list(current_path)
-        else:
-            neighbors = Wikiholder.return_edges(start)
-            for neighbor in neighbors:
-                if neighbor not in visited:
-                    result = path(neighbor, end, Wikiholder, current_path, visited)
-                    if result:
-                        return result
-
-        visited.remove(start)
-        current_path.pop()
-
-    return None
-
-              
+    return Wikiholder, None
+          
 
 def main(start, end):
-    Wikiholder = find_path(start, end, 500, weight=1)
-    shortest_path_result = path(start, end, Wikiholder)
-    print(f'Shortest path: {shortest_path_result}')
+    Wikiholder, path_result = find_path(start, end, 500, weight=1)
+    if path_result:
+        print(f'Path found: {path_result}')
+    else:
+        print('Path not found')
 
 if __name__ == "__main__":
-    main("https://en.wikipedia.org/wiki/World_War_II", "https://en.wikipedia.org/wiki/Philosophy")
+    main("https://en.wikipedia.org/wiki/World_War_II", "https://en.wikipedia.org/wiki/Luigi_Capello")
 
 
