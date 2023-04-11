@@ -9,15 +9,15 @@ using namespace std;
 class GameOfLife {
 public:
     GameOfLife() = default;
-
+    // set cell to be alive
     void set_alive(uint32_t row, uint32_t col) {
         alive_cells.insert(make_pair(row, col));
     }
-
+    // Compute next generation of cells
     void next_generation() {
         set<pair<uint32_t, uint32_t>> new_alive_cells;
         set<pair<uint32_t, uint32_t>> checked_cells;
-
+        // Iterate through alive cells and their neighbors, check if cell is processed, apply rules
         for (const auto& cell : alive_cells) {
             for (int i = -1; i <= 1; ++i) {
                 for (int j = -1; j <= 1; ++j) {
@@ -41,18 +41,20 @@ public:
         }
         alive_cells = new_alive_cells;
     }
-
+    // display the current state of game
     void display(int rows, int cols) {
         uint32_t minRow = UINT32_MAX;
         uint32_t maxRow = 0;
         uint32_t minCol = UINT32_MAX;
         uint32_t maxCol = 0;
+        // find boundaries of grid
         for (const auto& cell : alive_cells) {
             minRow = min(minRow, cell.first);
             maxRow = max(maxRow, cell.first);
             minCol = min(minCol, cell.second);
             maxCol = max(maxCol, cell.second);
         }
+        // calculate offsets
         uint32_t numRows = maxRow - minRow + 1;
         uint32_t numCols = maxCol - minCol + 1;
         uint32_t rowOffset = (rows - numRows) / 2;
@@ -108,12 +110,13 @@ private:
 int main() {
     GameOfLife game;
 
-    // Load the initial pattern from a file
+    // Load initial pattern from a file
     game.load_from_file("initial_pattern.txt");
 
     int display_rows = 20;
     int display_cols = 20;
-    int num_generations = 50; // Set the number of generations
+    // Set the number of generations
+    int num_generations = 50; 
 
     for (int generation = 0; generation < num_generations; ++generation) {
         system("clear");
